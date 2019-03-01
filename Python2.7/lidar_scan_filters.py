@@ -94,7 +94,10 @@ class TemporalMedianFilter:
 
         """
         # Remove stale scans
-        if (len(self.lidar_scans) > self.D):
+        if (self.D == 0):
+            return np.copy(lidar_scan)
+
+        elif (len(self.lidar_scans) > self.D):
             self.lidar_scans = self.lidar_scans[-self.D:]
             
         # Add new lidar scans and compute median
