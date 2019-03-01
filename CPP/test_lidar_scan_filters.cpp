@@ -1,84 +1,97 @@
 #include "lidar_scan_filters.cpp"
 #include <gtest/gtest.h>
 #include <vector>
+#include <boost/assign/list_of.hpp>
+
+/**
+ * Check that all elements of vector<double> are double equal
+ */
+void checkDoubleVectorsEqual(const std::vector<double> & v1, const std::vector<double> & v2) {
+  EXPECT_EQ(v1.size(), v2.size());
+
+  for (int i = 0; i < v1.size(); i++) {
+    EXPECT_DOUBLE_EQ(v1.at(i), v2.at(i));
+  }
+}
 
 TEST(RangeFilterTest, SmallRange) {
   RangeFilter r(1, 10);
-  //std::vector<double> scan1 = {1, 2, 3, 4, 5};
-  std::vector<double> scan1;
-  for (int i = 1; i <= 5; i++) {
-    scan1.push_back(i);
-  }
 
-  EXPECT_TRUE(scan1 == r.update(scan1));
+  std::vector<double> scan1 = boost::assign::list_of<double>(1)(2)(3)(4)(5);
+  std::vector<double> expected1 = scan1; 
+  checkDoubleVectorsEqual(r.update(scan1), expected1);
 
-  std::vector<double> scan2;
-  scan2.push_back(12);
-  scan2.push_back(10);
-  scan2.push_back(3);
-  scan2.push_back(9);
-  scan2.push_back(2);
-  std::vector<double> expected2(scan2);
-  expected2[0] = 10;
-  EXPECT_TRUE(expected2 == r.update(scan2));
+  std::vector<double> scan2 = boost::assign::list_of<double>(12)(20)(3)(9)(2);
+  std::vector<double> expected2 = boost::assign::list_of<double>(10)(10)(3)(9)(2);
+  checkDoubleVectorsEqual(r.update(scan2), expected2);
 
-  std::vector<double> scan3;
-  scan3.push_back(13);
-  scan3.push_back(10);
-  scan3.push_back(0.05);
-  scan3.push_back(9.2);
-  scan3.push_back(0.2);
-  std::vector<double> expected3(scan3);
-  expected3[0] = 10;
-  expected3[2] = 1;
-  expected3[4] = 1;
-  EXPECT_TRUE(expected3 == r.update(scan3));
+  std::vector<double> scan3 = boost::assign::list_of<double>(13)(10)(0.05)(9.2)(0.2);
+  std::vector<double> expected3 = boost::assign::list_of<double>(10)(10)(1)(9.2)(1);
+  checkDoubleVectorsEqual(r.update(scan3), expected3);
+}
+
+TEST(RangeFilterTest, LargeRange) {
+  RangeFilter r(0.3, 100);
+
+  std::vector<double> scan1 = boost::assign::list_of<double>(1)(2)(3)(4)(5);
+  std::vector<double> expected1 = scan1; 
+  checkDoubleVectorsEqual(r.update(scan1), expected1);
+
+  std::vector<double> scan2 = boost::assign::list_of<double>(12)(200)(3)(99.5)(100.5);
+  std::vector<double> expected2 = boost::assign::list_of<double>(12)(100)(3)(99.5)(100);
+  checkDoubleVectorsEqual(r.update(scan2), expected2);
+
+  std::vector<double> scan3 = boost::assign::list_of<double>(130)(10)(0.05)(999.2)(0.02);
+  std::vector<double> expected3 = boost::assign::list_of<double>(100)(10)(0.3)(100)(0.3);
+  checkDoubleVectorsEqual(r.update(scan3), expected3);
 }
 
 TEST(TemporalMedianFilterTest, oddD) {
   TemporalMedianFilter t(3);
-  std::vector<double> scan1;
-  for (int i = 1; i <= 5; i++) {
-    scan1.push_back(i);
-  }
-  EXPECT_TRUE(scan1 == t.update(scan1));
 
-  std::vector<double> scan2;
-  for (int i = 5; i >= 1; i--) {
-    scan2.push_back(i);
-  }
-  std::vector<double> expected2;
-  for (int i = 1; i <= 5; i++) {
-    expected2.push_back(3);
-  }
-  EXPECT_TRUE(expected2 == t.update(scan2));
+  std::vector<double> scan1 = boost::assign::list_of<double>(1)(2)(3)(4)(5);
+  std::vector<double> expected1 = scan1;
+  checkDoubleVectorsEqual(t.update(scan1), expected1);
 
-  std::vector<double> scan3;
-  for (int i = 1; i <= 5; i++) {
-    scan3.push_back(2);
-  }
-  std::vector<double> expected3(scan3);
-  expected3[2] = 3;
-  EXPECT_TRUE(expected3 == t.update(scan3));
+  std::vector<double> scan2 = boost::assign::list_of<double>(5)(4)(3)(2)(1);
+  std::vector<double> expected2 = boost::assign::list_of<double>(3)(3)(3)(3)(3);
+  checkDoubleVectorsEqual(t.update(scan2), expected2);
 
-  std::vector<double> scan4;
-  for (int i = 1; i <= 5; i++) {
-    scan4.push_back(0.5 + i);
-  }
-  std::vector<double> expected4;
-  expected4.push_back(1.75);expected4.push_back(2.25);expected4.push_back(3);expected4.push_back(3);expected4.push_back(3.5);
-  EXPECT_TRUE(expected4 == t.update(scan4));
+  std::vector<double> scan3 = boost::assign::list_of<double>(2)(2)(2)(2)(2);
+  std::vector<double> expected3 = boost::assign::list_of<double>(2)(2)(3)(2)(2);
+  checkDoubleVectorsEqual(t.update(scan3), expected3);
+
+  std::vector<double> scan4 = boost::assign::list_of<double>(1.5)(2.5)(3.5)(4.5)(5.5);
+  std::vector<double> expected4 = boost::assign::list_of<double>(1.75)(2.25)(3)(3)(3.5);
+  checkDoubleVectorsEqual(t.update(scan4), expected4);
   
-  std::vector<double> scan5;
-  for (int i = 1; i <= 5; i++) {
-    scan5.push_back(10 * i);
-  }
-  std::vector<double> expected5;
-  expected5.push_back(3.5);expected5.push_back(3.25);expected5.push_back(3.25);expected5.push_back(3.25);expected5.push_back(3.75);
-  EXPECT_TRUE(expected5 == t.update(scan5));
+  std::vector<double> scan5 = boost::assign::list_of<double>(10)(20)(30)(40)(50);
+  std::vector<double> expected5 = boost::assign::list_of<double>(3.5)(3.25)(3.25)(3.25)(3.75);
+  checkDoubleVectorsEqual(t.update(scan5), expected5);
+}
+
+TEST(TemporalMedianFilterTest, evenD) {
+  TemporalMedianFilter t(2);
+
+  std::vector<double> scan1 = boost::assign::list_of<double>(1)(2)(3)(4)(5);
+  std::vector<double> expected1 = scan1;
+  checkDoubleVectorsEqual(t.update(scan1), expected1);
+
+  std::vector<double> scan2 = boost::assign::list_of<double>(5)(4)(3)(2)(1);
+  std::vector<double> expected2 = boost::assign::list_of<double>(3)(3)(3)(3)(3);
+  checkDoubleVectorsEqual(t.update(scan2), expected2);
+
+  std::vector<double> scan3 = boost::assign::list_of<double>(2)(2)(2)(2)(2);
+  std::vector<double> expected3 = boost::assign::list_of<double>(2)(2)(3)(2)(2);
+  checkDoubleVectorsEqual(t.update(scan3), expected3);
+
+  std::vector<double> scan4 = boost::assign::list_of<double>(1.5)(2.5)(3.5)(4.5)(5.5);
+  std::vector<double> expected4 = boost::assign::list_of<double>(2)(2.5)(3)(2)(2);
+  checkDoubleVectorsEqual(t.update(scan4), expected4);
   
-  
-  
+  std::vector<double> scan5 = boost::assign::list_of<double>(10)(20)(30)(40)(50);
+  std::vector<double> expected5 = boost::assign::list_of<double>(2)(2.5)(3.5)(4.5)(5.5);
+  checkDoubleVectorsEqual(t.update(scan5), expected5);
 }
 
 int main(int argc, char **argv) {
