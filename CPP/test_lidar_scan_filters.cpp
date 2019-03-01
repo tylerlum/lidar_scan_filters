@@ -94,6 +94,30 @@ TEST(TemporalMedianFilterTest, evenD) {
   checkDoubleVectorsEqual(t.update(scan5), expected5);
 }
 
+TEST(TemporalMedianFilterTest, zeroD) {
+  TemporalMedianFilter t(0);
+
+  std::vector<double> scan1 = boost::assign::list_of<double>(1)(2)(3)(4)(5);
+  std::vector<double> expected1 = scan1;
+  checkDoubleVectorsEqual(t.update(scan1), expected1);
+
+  std::vector<double> scan2 = boost::assign::list_of<double>(5)(4)(3)(2)(1);
+  std::vector<double> expected2 = scan2;
+  checkDoubleVectorsEqual(t.update(scan2), expected2);
+
+  std::vector<double> scan3 = boost::assign::list_of<double>(2)(2)(2)(2)(2);
+  std::vector<double> expected3 = scan3;
+  checkDoubleVectorsEqual(t.update(scan3), expected3);
+
+  std::vector<double> scan4 = boost::assign::list_of<double>(1.5)(2.5)(3.5)(4.5)(5.5);
+  std::vector<double> expected4 = scan4;
+  checkDoubleVectorsEqual(t.update(scan4), expected4);
+  
+  std::vector<double> scan5 = boost::assign::list_of<double>(10)(20)(30)(40)(50);
+  std::vector<double> expected5 = scan5;
+  checkDoubleVectorsEqual(t.update(scan5), expected5);
+}
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
